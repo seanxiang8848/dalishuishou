@@ -1,0 +1,84 @@
+name: Build Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Debug - List all files
+      run: |
+        echo "=== Current Directory ==="
+        pwd
+        echo "=== All files recursively ==="
+        find . -type f -name "*.gradle" -o -name "gradlew" -o -name "*.kt" -o -name "*.java" | head -30
+        echo "=== Android directory structure ==="
+        if [ -d "大力水手/android" ]; then
+          echo "Found android directory in 大力水手/"
+          find 大力水手/android -type f | head -30
+        else
+          echo "ERROR: android directory not found!"
+        fi
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Decode Keystore
+      run: |
+        mkdir -p 大力水手/android
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > 大力水手/android/dalishuishou.keystore
+        echo "Keystore created:"
+        ls -la 大力水手/android/dalishuishou.keystore
+    
+    - name: Create Signing Properties
+      run: |
+        cat > 大力水手/android/signing.properties << EOF
+        RELEASE_STORE_FILE=dalishuishou.keystore
+        RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+        EOF
+        echo "Signing properties created"
+        cat 大力水手/android/signing.properties
+    
+    - name: Verify gradlew exists
+      run: |
+        echo "=== Checking gradlew ==="
+        if [ -f "大力水手/android/gradlew" ]; then
+          echo "✅ gradlew exists"
+          ls -la 大力水手/android/gradlew
+          chmod +x 大力水手/android/gradlew
+        else
+          echo "❌ gradlew NOT FOUND"
+          echo "Looking for gradlew in:"
+          find . -name "gradlew" 2>/dev/null || echo "No gradlew found anywhere"
+        fi
+    
+    - name: Build APK
+      run: |
+        echo "=== Entering correct directory ==="
+        cd 大力水手/android
+        echo "Current directory: $(pwd)"
+        echo "Files in current directory:"
+        ls -la
+        echo "=== Running gradlew ==="
+        ./gradlew assembleRelease --stacktrace
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: app-release-apk
+        path: 大力水手/android/app/build/outputs/apk/release/*.apk
