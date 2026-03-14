@@ -7,15 +7,38 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Check directory structure
+      run: |
+        echo "=== Current Directory ==="
+        pwd
+        ls -la
+        echo "=== Android Directory ==="
+        ls -la android/ 2>/dev/null || echo "android directory NOT FOUND"        
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-    - uses: android-actions/setup-android@v3
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Create android directory if needed
+      run: |
+        if [ ! -d "android" ]; then
+          echo "Creating android directory"
+          mkdir -p android
+        fi
+        ls -la android/        
     
     - name: Decode Keystore
-      run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/dalishuishou.keystore
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/dalishuishou.keystore
+        ls -la android/dalishuishou.keystore        
     
     - name: Create Signing Properties
       run: |
@@ -24,16 +47,18 @@ jobs:
         RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
         RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
         RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
-        EOF        
+        EOF
+        cat android/signing.properties        
     
     - name: Build APK
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew assembleRelease        
+        ./gradlew assembleRelease --stacktrace        
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: app-release-apk
         path: android/app/build/outputs/apk/release/*.apk
