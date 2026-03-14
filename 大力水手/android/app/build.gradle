@@ -154,9 +154,10 @@ dependencies {
     implementation 'androidx.compose.material:material:1.5.4'
 
     // Maps
-    implementation 'com.amap.api:map3d:latest.integration'
-    implementation 'com.amap.api:location:latest.integration'
-    implementation 'com.amap.api:search:latest.integration'
+    // 高德地图 SDK
+    implementation 'com.amap.api:3dmap:10.2.0'
+    implementation 'com.amap.api:location:6.5.0'
+    implementation 'com.amap.api:search:10.2.0'
 
     // QR Code Scanner
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
