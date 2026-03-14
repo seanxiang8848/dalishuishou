@@ -156,7 +156,7 @@ dependencies {
     // Maps
     // 高德地图 SDK
     implementation 'com.amap.api:3dmap:10.2.0'
-    implementation 'com.amap.api:location:6.5.0'
+    implementation 'com.amap.api:location:6.1.0'
     implementation 'com.amap.api:search:10.2.0'
 
     // QR Code Scanner
