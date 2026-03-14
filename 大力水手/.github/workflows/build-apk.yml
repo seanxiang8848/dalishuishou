@@ -19,8 +19,9 @@ jobs:
         echo "=== All files recursively ==="
         find . -type f -name "*.gradle" -o -name "gradlew" -o -name "*.kt" -o -name "*.java" | head -30
         echo "=== Android directory structure ==="
-        if [ -d "android" ]; then
-          find android -type f | head -30
+        if [ -d "大力水手/android" ]; then
+          echo "Found android directory in 大力水手/"
+          find 大力水手/android -type f | head -30
         else
           echo "ERROR: android directory not found!"
         fi
@@ -36,29 +37,29 @@ jobs:
     
     - name: Decode Keystore
       run: |
-        mkdir -p android
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/dalishuishou.keystore
+        mkdir -p 大力水手/android
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > 大力水手/android/dalishuishou.keystore
         echo "Keystore created:"
-        ls -la android/dalishuishou.keystore
+        ls -la 大力水手/android/dalishuishou.keystore
     
     - name: Create Signing Properties
       run: |
-        cat > android/signing.properties << EOF
+        cat > 大力水手/android/signing.properties << EOF
         RELEASE_STORE_FILE=dalishuishou.keystore
         RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
         RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
         RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
         EOF
         echo "Signing properties created"
-        cat android/signing.properties
+        cat 大力水手/android/signing.properties
     
     - name: Verify gradlew exists
       run: |
         echo "=== Checking gradlew ==="
-        if [ -f "android/gradlew" ]; then
+        if [ -f "大力水手/android/gradlew" ]; then
           echo "✅ gradlew exists"
-          ls -la android/gradlew
-          chmod +x android/gradlew
+          ls -la 大力水手/android/gradlew
+          chmod +x 大力水手/android/gradlew
         else
           echo "❌ gradlew NOT FOUND"
           echo "Looking for gradlew in:"
@@ -67,7 +68,7 @@ jobs:
     
     - name: Build APK
       run: |
-        cd android
+        cd 大力水手/android
         echo "Current directory: $(pwd)"
         echo "Files in android directory:"
         ls -la
@@ -78,4 +79,4 @@ jobs:
       if: always()
       with:
         name: app-release-apk
-        path: android/app/build/outputs/apk/release/*.apk
+        path: 大力水手/android/app/build/outputs/apk/release/*.apk
