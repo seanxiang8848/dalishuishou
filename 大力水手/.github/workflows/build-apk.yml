@@ -7,25 +7,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
-    - name: Verify structure
+    - name: Check directory structure
       run: |
-        echo "Current directory:"
+        echo "=== Current Directory ==="
         pwd
         ls -la
-        echo "Android directory:"
-        ls -la android/ 2>/dev/null || echo "android dir not found"
+        echo "=== Android Directory ==="
+        ls -la android/ 2>/dev/null || echo "android directory NOT FOUND"
     
-    - uses: actions/setup-java@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
     
-    - uses: android-actions/setup-android@v3
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
     
-    - name: Create android directory
-      run: mkdir -p android
+    - name: Create android directory if needed
+      run: |
+        if [ ! -d "android" ]; then
+          echo "Creating android directory"
+          mkdir -p android
+        fi
+        ls -la android/
     
     - name: Decode Keystore
       run: |
@@ -40,12 +48,13 @@ jobs:
         RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
         RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
         EOF
+        cat android/signing.properties
     
     - name: Build APK
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew assembleRelease
+        ./gradlew assembleRelease --stacktrace
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
