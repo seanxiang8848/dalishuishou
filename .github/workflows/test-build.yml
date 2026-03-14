@@ -1,0 +1,64 @@
+name: Test Android Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Test build'
+        required: false
+        default: 'true'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Test basic structure
+      run: |
+        echo "=== 1. 检查目录 ==="
+        pwd
+        ls -la
+        
+        echo "=== 2. 检查大力水手目录 ==="
+        ls -la "大力水手/" || echo "大力水手目录不存在"
+        
+        echo "=== 3. 检查 Android 目录 ==="
+        ls -la "大力水手/android/" || echo "Android 目录不存在"
+        
+        echo "=== 4. 检查 gradlew ==="
+        if [ -f "大力水手/android/gradlew" ]; then
+            echo "gradlew 文件存在"
+            ls -la "大力水手/android/gradlew"
+        else
+            echo "gradlew 文件不存在"
+        fi
+        
+        echo "=== 5. 检查 build.gradle ==="
+        if [ -f "大力水手/android/build.gradle" ]; then
+            echo "build.gradle 文件存在"
+            head -20 "大力水手/android/build.gradle"
+        else
+            echo "build.gradle 文件不存在"
+        fi
+    
+    - name: Try simple Gradle task
+      run: |
+        cd "大力水手/android"
+        chmod +x gradlew
+        echo "=== 尝试运行 gradlew tasks ==="
+        ./gradlew tasks --all || echo "gradlew tasks 失败"
+        
+        echo "=== 尝试运行 gradlew --version ==="
+        ./gradlew --version || echo "gradlew --version 失败"
