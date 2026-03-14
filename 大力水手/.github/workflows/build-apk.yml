@@ -9,14 +9,23 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
-    - name: Check directory structure
+    - name: Debug - Check repository structure
       run: |
         echo "=== Current Directory ==="
         pwd
         ls -la
-        echo "=== Android Directory ==="
-        ls -la android/ 2>/dev/null || echo "android directory NOT FOUND"
+        echo "=== Root Directory ==="
+        ls -la /
+        echo "=== Check if android exists ==="
+        if [ -d "android" ]; then
+          echo "android directory exists"
+          ls -la android/
+        else
+          echo "android directory NOT FOUND"
+        fi
     
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -27,18 +36,11 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Create android directory if needed
-      run: |
-        if [ ! -d "android" ]; then
-          echo "Creating android directory"
-          mkdir -p android
-        fi
-        ls -la android/
-    
     - name: Decode Keystore
       run: |
+        mkdir -p android
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/dalishuishou.keystore
-        ls -la android/dalishuishou.keystore
+        ls -la android/
     
     - name: Create Signing Properties
       run: |
@@ -53,6 +55,7 @@ jobs:
     - name: Build APK
       run: |
         cd android
+        ls -la
         chmod +x gradlew
         ./gradlew assembleRelease --stacktrace
     
