@@ -1,12 +1,12 @@
-name: Simple APK Build
+name: Build APK (No Signing)
 
 on:
   workflow_dispatch:
     inputs:
-      release:
-        description: 'Build release APK'
+      build_type:
+        description: 'Build type'
         required: false
-        default: 'true'
+        default: 'debug'
 
 jobs:
   build:
@@ -25,28 +25,24 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Debug - List directory structure
+    - name: Debug - List files
       run: |
-        echo "=== 目录结构 ==="
-        find . -type f -name "*.gradle" -o -name "gradlew" | head -20
-        echo "=== 当前目录 ==="
+        echo "=== 项目结构 ==="
+        find "大力水手" -name "*.gradle" -o -name "gradlew" | head -10
+        echo "=== 进入目录 ==="
+        cd "大力水手/android"
         pwd
         ls -la
     
-    - name: Grant execute permission for gradlew
+    - name: Build Debug APK (No signing required)
       run: |
         cd "大力水手/android"
         chmod +x gradlew
-        ls -la gradlew
-    
-    - name: Build with Gradle
-      run: |
-        cd "大力水手/android"
-        ./gradlew assembleRelease
+        ./gradlew assembleDebug
       
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-release-apk
-        path: "大力水手/android/app/build/outputs/apk/release/*.apk"
+        name: app-debug-apk
+        path: "大力水手/android/app/build/outputs/apk/debug/*.apk"
         retention-days: 7
