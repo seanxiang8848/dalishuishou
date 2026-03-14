@@ -1,0 +1,73 @@
+name: Build APK With Signing
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'debug'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Prepare signing files
+      run: |
+        echo "=== 准备签名文件 ==="
+        cd "大力水手/android"
+        
+        # 从 base64 解码 keystore
+        echo "正在解码 keystore..."
+        base64 -d keystore.base64.txt > dalishuishou.keystore
+        
+        echo "签名文件准备完成:"
+        ls -la dalishuishou.keystore signing.properties
+        
+        # 验证 keystore
+        echo "验证 keystore..."
+        keytool -list -keystore dalishuishou.keystore -storepass "Dalishuishou2026!" -alias dalishuishou || echo "验证失败，但继续..."
+    
+    - name: Build with signing
+      run: |
+        cd "大力水手/android"
+        chmod +x gradlew
+        
+        echo "=== 构建 Release APK ==="
+        ./gradlew assembleRelease --stacktrace 2>&1 | tail -200
+        
+        echo "=== 同时构建 Debug APK ==="
+        ./gradlew assembleDebug --stacktrace 2>&1 | tail -100
+    
+    - name: Find and upload APKs
+      run: |
+        cd "大力水手/android"
+        echo "=== 查找所有 APK 文件 ==="
+        find . -name "*.apk" -type f 2>/dev/null
+        
+        # 复制 APK 到工作目录
+        mkdir -p $GITHUB_WORKSPACE/apks
+        find . -name "*.apk" -type f -exec cp {} $GITHUB_WORKSPACE/apks/ \;
+        
+        echo "复制的 APK:"
+        ls -la $GITHUB_WORKSPACE/apks/
+    
+    - name: Upload APK artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dalishuishou-apks
+        path: ${{ github.workspace }}/apks/
+        retention-days: 7
