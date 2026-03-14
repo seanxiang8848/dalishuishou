@@ -5,6 +5,13 @@ buildscript {
         kotlin_version = '1.9.20'
         hilt_version = '2.48'
     }
+    repositories {
+        mavenCentral()
+        google()
+        // 高德地图仓库
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    }
 }
 
 plugins {
@@ -105,6 +112,14 @@ android {
             manifestPlaceholders = [CHANNEL_VALUE: "douyin"]
         }
     }
+}
+
+repositories {
+    mavenCentral()
+    google()
+    // 高德地图仓库
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
 dependencies {
