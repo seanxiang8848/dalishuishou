@@ -25,19 +25,28 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
+    - name: Debug - List directory structure
+      run: |
+        echo "=== 目录结构 ==="
+        find . -type f -name "*.gradle" -o -name "gradlew" | head -20
+        echo "=== 当前目录 ==="
+        pwd
+        ls -la
+    
     - name: Grant execute permission for gradlew
       run: |
-        cd android
+        cd "大力水手/android"
         chmod +x gradlew
+        ls -la gradlew
     
     - name: Build with Gradle
       run: |
-        cd android
+        cd "大力水手/android"
         ./gradlew assembleRelease
       
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-release-apk
-        path: android/app/build/outputs/apk/release/*.apk
+        path: "大力水手/android/app/build/outputs/apk/release/*.apk"
         retention-days: 7
