@@ -1,0 +1,7 @@
+# 大力水手 签名配置
+# 注意：此文件不要提交到Git仓库
+
+RELEASE_STORE_FILE=dalishuishou.keystore
+RELEASE_STORE_PASSWORD=your_store_password
+RELEASE_KEY_ALIAS=dalishuishou
+RELEASE_KEY_PASSWORD=your_key_password

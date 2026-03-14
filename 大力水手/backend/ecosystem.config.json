@@ -1,0 +1,33 @@
+{
+  "apps": [
+    {
+      "name": "dalishuishou-api",
+      "script": "./server.js",
+      "cwd": "/root/.openclaw/workspace/大力水手/backend",
+      "instances": 1,
+      "exec_mode": "fork",
+      "max_memory_restart": "500M",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3000
+      },
+      "env_development": {
+        "NODE_ENV": "development",
+        "PORT": 3000
+      },
+      "log_file": "./logs/combined.log",
+      "out_file": "./logs/out.log",
+      "error_file": "./logs/error.log",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+      "merge_logs": true,
+      "autorestart": true,
+      "restart_delay": 3000,
+      "max_restarts": 10,
+      "min_uptime": "10s",
+      "watch": false,
+      "ignore_watch": ["node_modules", "logs", "uploads"],
+      "kill_timeout": 5000,
+      "listen_timeout": 10000
+    }
+  ]
+}

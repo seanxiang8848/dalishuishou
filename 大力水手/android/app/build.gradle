@@ -1,0 +1,176 @@
+// Project-level build.gradle
+buildscript {
+    ext {
+        compose_version = '1.5.4'
+        kotlin_version = '1.9.20'
+        hilt_version = '2.48'
+    }
+}
+
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.dagger.hilt.android'
+    id 'kotlin-kapt'
+}
+
+android {
+    namespace 'com.seanxiangchao.orders'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.seanxiangchao.orders"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    // 签名配置
+    signingConfigs {
+        release {
+            storeFile file(RELEASE_STORE_FILE)
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            debuggable true
+            buildConfigField "boolean", "DEBUG_MODE", "true"
+        }
+        
+        release {
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
+            
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            signingConfig signingConfigs.release
+            
+            // 移除日志
+            buildConfigField "boolean", "DEBUG_MODE", "false"
+            
+            // 代码混淆
+            proguardFiles(
+                getDefaultProguardFile('proguard-android-optimize.txt'),
+                'proguard-rules.pro'
+            )
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+    
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.4'
+    }
+    
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    
+    // 多渠道打包配置
+    flavorDimensions "channel"
+    productFlavors {
+        official {
+            dimension "channel"
+            manifestPlaceholders = [CHANNEL_VALUE: "official"]
+        }
+        douyin {
+            dimension "channel"
+            manifestPlaceholders = [CHANNEL_VALUE: "douyin"]
+        }
+    }
+}
+
+dependencies {
+    // Android Core
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.activity:activity-compose:1.8.2'
+
+    // Compose BOM
+    implementation platform('androidx.compose:compose-bom:2023.10.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+
+    // Navigation
+    implementation 'androidx.navigation:navigation-compose:2.7.6'
+
+    // ViewModel
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.7.0'
+
+    // Hilt DI
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    kapt "com.google.dagger:hilt-compiler:$hilt_version"
+    implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
+
+    // Network
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+    // DataStore
+    implementation 'androidx.datastore:datastore-preferences:1.0.0'
+
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
+
+    // Coil (Image Loading)
+    implementation 'io.coil-kt:coil-compose:2.5.0'
+
+    // Permissions
+    implementation 'com.google.accompanist:accompanist-permissions:0.32.0'
+
+    // Pull to Refresh
+    implementation 'androidx.compose.material:material:1.5.4'
+
+    // Maps
+    implementation 'com.amap.api:map3d:latest.integration'
+    implementation 'com.amap.api:location:latest.integration'
+    implementation 'com.amap.api:search:latest.integration'
+
+    // QR Code Scanner
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    // Push (JPush)
+    implementation 'cn.jiguang.sdk:jpush:5.2.0'
+    implementation 'cn.jiguang.sdk:jcore:4.4.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation platform('androidx.compose:compose-bom:2023.10.01')
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
+}
