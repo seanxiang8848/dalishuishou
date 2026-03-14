@@ -9,14 +9,21 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
-    - name: Check directory structure
+    - name: Debug - List all files
       run: |
         echo "=== Current Directory ==="
         pwd
-        ls -la
-        echo "=== Android Directory ==="
-        ls -la android/ 2>/dev/null || echo "android directory NOT FOUND"        
+        echo "=== All files recursively ==="
+        find . -type f -name "*.gradle" -o -name "gradlew" -o -name "*.kt" -o -name "*.java" | head -30
+        echo "=== Android directory structure ==="
+        if [ -d "android" ]; then
+          find android -type f | head -30
+        else
+          echo "ERROR: android directory not found!"
+        fi        
     
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -27,17 +34,11 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Create android directory if needed
-      run: |
-        if [ ! -d "android" ]; then
-          echo "Creating android directory"
-          mkdir -p android
-        fi
-        ls -la android/        
-    
     - name: Decode Keystore
       run: |
+        mkdir -p android
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/dalishuishou.keystore
+        echo "Keystore created:"
         ls -la android/dalishuishou.keystore        
     
     - name: Create Signing Properties
@@ -48,12 +49,28 @@ jobs:
         RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
         RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
         EOF
+        echo "Signing properties created"
         cat android/signing.properties        
+    
+    - name: Verify gradlew exists
+      run: |
+        echo "=== Checking gradlew ==="
+        if [ -f "android/gradlew" ]; then
+          echo "✅ gradlew exists"
+          ls -la android/gradlew
+          chmod +x android/gradlew
+        else
+          echo "❌ gradlew NOT FOUND"
+          echo "Looking for gradlew in:"
+          find . -name "gradlew" 2>/dev/null || echo "No gradlew found anywhere"
+        fi        
     
     - name: Build APK
       run: |
         cd android
-        chmod +x gradlew
+        echo "Current directory: $(pwd)"
+        echo "Files in android directory:"
+        ls -la
         ./gradlew assembleRelease --stacktrace        
     
     - name: Upload APK
