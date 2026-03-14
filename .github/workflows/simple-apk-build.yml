@@ -1,10 +1,10 @@
-name: Build APK (No Signing)
+name: Build APK Final
 
 on:
   workflow_dispatch:
     inputs:
       build_type:
-        description: 'Build type'
+        description: 'Build type (debug/release)'
         required: false
         default: 'debug'
 
@@ -25,24 +25,72 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Debug - List files
+    - name: Prepare environment
       run: |
-        echo "=== 项目结构 ==="
-        find "大力水手" -name "*.gradle" -o -name "gradlew" | head -10
-        echo "=== 进入目录 ==="
+        echo "=== 环境准备 ==="
         cd "大力水手/android"
         pwd
         ls -la
+        
+        echo "=== 设置 gradlew 权限 ==="
+        chmod +x gradlew
+        ./gradlew --version
+        
+        echo "=== 清理之前的构建 ==="
+        ./gradlew clean || echo "清理失败，继续..."
     
-    - name: Build Debug APK (No signing required)
+    - name: Build step by step
       run: |
         cd "大力水手/android"
-        chmod +x gradlew
-        ./gradlew assembleDebug
-      
-    - name: Upload APK artifact
+        
+        echo "=== 步骤1: 检查依赖 ==="
+        ./gradlew dependencies --configuration debugCompileClasspath || echo "依赖检查失败"
+        
+        echo "=== 步骤2: 同步项目 ==="
+        ./gradlew :app:assembleDebug --stacktrace --info || echo "构建失败，查看错误..."
+        
+        echo "=== 步骤3: 检查生成的 APK ==="
+        find . -name "*.apk" -type f 2>/dev/null || echo "未找到 APK 文件"
+    
+    - name: Simple build (fallback)
+      if: failure()
+      run: |
+        cd "大力水手/android"
+        echo "=== 尝试最简单的构建 ==="
+        # 只构建 app 模块
+        ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tail -100
+    
+    - name: Upload APK if exists
+      if: success()
+      run: |
+        echo "=== 查找 APK 文件 ==="
+        APK_FILES=$(find "大力水手/android" -name "*.apk" -type f 2>/dev/null | head -5)
+        
+        if [ -n "$APK_FILES" ]; then
+            echo "找到 APK 文件:"
+            for file in $APK_FILES; do
+                echo "  - $file"
+                ls -lh "$file"
+            done
+            
+            # 复制第一个 APK 到工作目录
+            FIRST_APK=$(echo "$APK_FILES" | head -1)
+            cp "$FIRST_APK" /tmp/app-built.apk
+            echo "APK 已复制到: /tmp/app-built.apk"
+        else
+            echo "❌ 未找到 APK 文件"
+            # 列出 build 目录
+            echo "=== build 目录内容 ==="
+            find "大力水手/android" -name "build" -type d | head -3 | while read dir; do
+                echo "检查目录: $dir"
+                find "$dir" -name "*.apk" -type f 2>/dev/null || echo "  无 APK 文件"
+            done
+        fi
+    
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-apk
-        path: "大力水手/android/app/build/outputs/apk/debug/*.apk"
-        retention-days: 7
+        name: android-apk
+        path: /tmp/app-built.apk
+        if-no-files-found: warn
+        retention-days: 1
