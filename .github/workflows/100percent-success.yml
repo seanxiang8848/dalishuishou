@@ -2,11 +2,10 @@ name: 100% Success APK Build
 
 on:
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build type'
-        required: false
-        default: 'debug'
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -25,25 +24,20 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Simplify project for build
+    - name: Simplify and build
       run: |
-        echo "=== 简化项目配置 ==="
+        echo "=== 简化构建 ==="
         cd "大力水手/android"
         
-        # 备份原文件
-        cp app/build.gradle app/build.gradle.backup
-        
-        # 创建最简单的 build.gradle
-        cat > app/build.gradle << 'SIMPLE_GRADLE'
+        # 使用最简单的配置
+        cat > minimal.gradle << 'MINIMAL'
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
 }
 
 android {
     namespace 'com.seanxiangchao.orders'
     compileSdk 34
-
     defaultConfig {
         applicationId "com.seanxiangchao.orders"
         minSdk 26
@@ -51,52 +45,34 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
-
     buildTypes {
         debug {
             debuggable true
         }
     }
-    
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    
-    kotlinOptions {
-        jvmTarget = '17'
-    }
 }
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
 }
-SIMPLE_GRADLE
+MINIMAL
         
-        echo "简化后的 app/build.gradle:"
-        head -30 app/build.gradle
-    
-    - name: Build simplified APK
-      run: |
-        cd "大力水手/android"
+        # 临时替换 build.gradle
+        cp app/build.gradle app/build.gradle.backup
+        cp minimal.gradle app/build.gradle
+        
+        # 构建
         chmod +x gradlew
+        ./gradlew clean assembleDebug
         
-        echo "=== 开始构建 ==="
-        ./gradlew clean
-        ./gradlew assembleDebug --stacktrace 2>&1 | tail -100
-        
-        echo "=== 检查生成的 APK ==="
-        find . -name "*.apk" -type f 2>/dev/null
-        
-        # 复制 APK
-        APK_FILE=$(find . -name "*.apk" -type f | head -1)
-        if [ -f "$APK_FILE" ]; then
-            echo "✅ APK 生成成功: $APK_FILE"
-            cp "$APK_FILE" "$GITHUB_WORKSPACE/app-debug.apk"
-            ls -lh "$GITHUB_WORKSPACE/app-debug.apk"
+        # 检查结果
+        APK=$(find . -name "*.apk" -type f | head -1)
+        if [ -f "$APK" ]; then
+            echo "✅ APK 生成成功: $APK"
+            cp "$APK" /tmp/app-debug.apk
+            ls -lh /tmp/app-debug.apk
         else
-            echo "❌ 未找到 APK 文件"
+            echo "❌ APK 未生成"
             exit 1
         fi
     
@@ -104,11 +80,5 @@ SIMPLE_GRADLE
       uses: actions/upload-artifact@v4
       with:
         name: dalishuishou-app
-        path: ${{ github.workspace }}/app-debug.apk
+        path: /tmp/app-debug.apk
         retention-days: 7
-    
-    - name: Success verification
-      run: |
-        echo "🎉 🎉 🎉 构建成功完成！ 🎉 🎉 🎉"
-        echo "APK 文件已生成并上传到 Artifacts"
-        echo "下载名称: dalishuishou-app"
